@@ -21,7 +21,7 @@
 
 namespace cubit {
 
-  enum { block_size = 1024 };
+  enum { block_size = 128 };
   
   template<typename key_t>
   inline static __device__ void putInOrder(key_t *keys, int N, int a, int b)
@@ -66,6 +66,8 @@ namespace cubit {
     N -= 2*blockIdx.x*blockDim.x;
     // if (blockIdx.x*blockDim.x >= N) return;
 
+    if (N <= 0) return;
+    
     int segLen = 1<<logSegLen;
     __shared__ key_t l_keys[2*cubit::block_size];
     if (threadIdx.x < N)
@@ -159,7 +161,7 @@ namespace cubit {
     int nb = (N+bs-1)/bs;
 #if 1
     for (int logLen = 0; (1<<logLen) <= N; logLen++) {
-      if ((1<<logLen) <= bs)
+      if ((2<<logLen) <= bs)
         d_bitonic_block<key_t,true><<<nb,bs,0,stream>>>(d_values,N,logLen);
       else {
         d_bitonic<key_t,true><<<nb,bs,0,stream>>>(d_values,N,logLen);
