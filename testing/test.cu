@@ -16,24 +16,28 @@ void testIt(const std::vector<T> &h_values)
 {
   T *d_values = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&d_values,h_values.size()*sizeof(T)));
+  if (!d_values) throw std::runtime_error("could not malloc...");
   CUBIT_CUDA_CALL(Memcpy(d_values,h_values.data(),h_values.size()*sizeof(T),cudaMemcpyDefault));
 
   T *d_bitonic = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&d_bitonic,h_values.size()*sizeof(T)));
+  if (!d_bitonic) throw std::runtime_error("could not malloc...");
 
   // ------------------------------------------------------------------
   // CUB ***INIT***
   // ------------------------------------------------------------------
   T *d_cub_radix_in = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_in,h_values.size()*sizeof(T)));
+  if (!d_cub_radix_in) throw std::runtime_error("could not malloc...");
   T *d_cub_radix_out = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_out,h_values.size()*sizeof(T)));
+  if (!d_cub_radix_out) throw std::runtime_error("could not malloc...");
   void *d_cub_radix_tmp = 0;
   size_t  cub_radix_tmp_size = 0;
   cub::DeviceRadixSort::SortKeys(d_cub_radix_tmp,cub_radix_tmp_size,
                                   d_cub_radix_in,d_cub_radix_out,h_values.size());
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_tmp,cub_radix_tmp_size));
-
+  if (!d_cub_radix_tmp) throw std::runtime_error("could not malloc...");
   int nRepeats = 1000;
   
   // ------------------------------------------------------------------
@@ -45,6 +49,7 @@ void testIt(const std::vector<T> &h_values)
     cub::DeviceRadixSort::SortKeys(d_cub_radix_tmp,cub_radix_tmp_size,
                                    d_cub_radix_in,d_cub_radix_out,h_values.size());
   }
+  CUBIT_CUDA_SYNC_CHECK();
   double t_cub_radix = (getCurrentTime() - t0_cub_radix)/nRepeats;
   
   // ------------------------------------------------------------------
@@ -54,7 +59,9 @@ void testIt(const std::vector<T> &h_values)
   for (int i=0;i<nRepeats;i++) {
     CUBIT_CUDA_CALL(Memcpy(d_bitonic,d_values,h_values.size()*sizeof(T),cudaMemcpyDefault));
     cubit::sort(d_bitonic,h_values.size());
+    CUBIT_CUDA_SYNC_CHECK();
   }
+  CUBIT_CUDA_SYNC_CHECK();
   double t_bitonic = (getCurrentTime() - t0_bitonic)/nRepeats;
   
   CUBIT_CUDA_SYNC_CHECK();
@@ -65,12 +72,19 @@ void testIt(const std::vector<T> &h_values)
     throw std::runtime_error("not sorted...");
 
   std::cout << "time(s) : cub radix = " << prettyDouble(t_cub_radix) << "  vs bitonic " << prettyDouble(t_bitonic) << " (that's " << (t_bitonic/t_cub_radix) << "x faster than us)" << std::endl;
+
+
+  CUBIT_CUDA_CALL(Free(d_values));
+  CUBIT_CUDA_CALL(Free(d_bitonic));
+  CUBIT_CUDA_CALL(Free(d_cub_radix_in));
+  CUBIT_CUDA_CALL(Free(d_cub_radix_out));
+  CUBIT_CUDA_CALL(Free(d_cub_radix_tmp));
 }
 
 int main(int ac, char **av)
 {
   while (true) {
-    int N = 1+int(powf(2.f,20*drand48()));
+    int N = 1+int(powf(2.f,22*sqrtf(drand48())));
     std::vector<int> values(N);
     for (int i=0;i<N;i++)
       values[i] = (random() % N) - N/4;
