@@ -57,6 +57,6 @@ endif()
 
 
 add_executable(test_int32 testing/test.cu)
-#set(CUDA_ARCH_FLAGS "-gencode arch=compute_70,code=sm_70 -gencode arch=compute_80,code=sm_80 -gencode arch=compute_86,code=sm_86")
-#set_source_files_properties(testing/test.cu PROPERTIES COMPILE_FLAGS ${CUDA_ARCH_FLAGS})
+set(CUDA_ARCH_FLAGS "-gencode arch=compute_70,code=sm_70 -gencode arch=compute_80,code=sm_80 -gencode arch=compute_86,code=sm_86")
+set_source_files_properties(testing/test.cu PROPERTIES COMPILE_FLAGS ${CUDA_ARCH_FLAGS})
 
