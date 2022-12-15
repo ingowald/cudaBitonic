@@ -76,75 +76,45 @@ namespace cubit {
 
 
   template<typename key_t>
-  __global__ void block_sort_up(key_t *const __restrict__ g_keys, uint32_t _N,
-                                key_t *dbg, int dbg_a, int dbg_b)
+  __global__ void block_sort_up(key_t *const __restrict__ g_keys, uint32_t _N)
   {
-    if (dbg_a == 0 && dbg_b == 0) {
-      dbg[threadIdx.x] = 0xfff;
-      dbg[threadIdx.x+1024] = 0xfff;
-      __syncthreads();
-    }
+    // if (dbg_a == 0 && dbg_b == 0) {
+    //   dbg[threadIdx.x] = INT_MAX;
+    //   dbg[threadIdx.x+1024] = INT_MAX;
+    //   __syncthreads();
+    // }
     
     __shared__ key_t keys[2*1024];
     uint32_t blockStart = blockIdx.x*(2*1024);
     if (blockStart+threadIdx.x < _N)
       keys[threadIdx.x] = g_keys[blockStart+threadIdx.x];
     else
-      keys[threadIdx.x] = 0xfff;
+      keys[threadIdx.x] = INT_MAX;
     if (1024+blockStart+threadIdx.x < _N)
       keys[1024+threadIdx.x] = g_keys[1024+blockStart+threadIdx.x];
     else
-      keys[1024+threadIdx.x] = 0xfff;
+      keys[1024+threadIdx.x] = INT_MAX;
     __syncthreads();
     
-    // uint32_t N = _N - blockStart;
-
-#if 1
-#define DBG_SAVE(sa,sb)                           \
-    if (sa==dbg_a && sb==dbg_b) {               \
-      __syncthreads();                          \
-      dbg[threadIdx.x] = keys[threadIdx.x];             \
-      dbg[threadIdx.x+1024] = keys[threadIdx.x+1024];   \
-    }
-#else
-#define DBG_SAVE(sa,sb)                           /* nothing */
-#endif
-
-    DBG_SAVE(0,0);
-
     int l, r, s;
     // ======== seq size 1 ==========
     {
       l = threadIdx.x+threadIdx.x;
       r = l + 1;
-
-      if (dbg_a == 1 && dbg_b == 0 && r < _N)
-        printf("(1.1)comparing %2i:%2i (values %i %i)\n",
-               l,r,keys[l],keys[r]);
-      // if (r < N)
       sort(keys,l,r);
     }
-
-    DBG_SAVE(1,0);
 
     // ======== seq size 2 ==========
     {
       s    = (int)threadIdx.x & -2;
       l    = threadIdx.x+s;
       r    = l ^ (4-1);
-      // if (r < N)
-      // printf("(2.2)comparing %2i:%2i (values %i %i)\n",
-      //        l,r,keys[l],keys[r]);
-      // if (r < N)
       sort(keys,l,r);
       
-      DBG_SAVE(2,1);
       // ------ down seq size 1 ---------
       l = threadIdx.x+threadIdx.x;
       r = l + 1;
-      // if (r < N)
       sort(keys,l,r);
-      DBG_SAVE(2,0);
     }
 
     // ======== seq size 4 ==========
@@ -153,19 +123,16 @@ namespace cubit {
       l    = threadIdx.x+s;
       r    = l ^ (8-1);
       sort(keys,l,r);
-      DBG_SAVE(4,2);
       
       // ------ down seq size 2 ---------
       l = threadIdx.x+((int)threadIdx.x & -2);
       r = l + 2;
       sort(keys,l,r);
-      DBG_SAVE(4,1);
 
       // ------ down seq size 1 ---------
       l = threadIdx.x+threadIdx.x;
       r = l + 1;
       sort(keys,l,r);
-      DBG_SAVE(4,0);
     }
 
     // ======== seq size 8 ==========
@@ -634,7 +601,7 @@ namespace cubit {
     int bs = 1024;
     int numValuesPerBlock = 2*bs;
     int nb = divRoundUp((int)numValues,numValuesPerBlock);
-    block_sort_up<<<nb,bs>>>(d_values,numValues,dbg,dbg_a,dbg_b);
+    block_sort_up<<<nb,bs>>>(d_values,numValues);
     CUBIT_CUDA_SYNC_CHECK(); fflush(0);
 #else
     int N = numValues;

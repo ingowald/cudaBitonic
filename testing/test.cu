@@ -14,13 +14,13 @@ inline bool sorted(const std::vector<int> &values)
 template<typename T>
 void print(T *values, size_t N, int S) {
   int eol = N;
-  while (values[eol-1] == 0xfff) --eol;
+  while (values[eol-1] == INT_MAX) --eol;
   for (int i=0;i<eol;i++) {
     if (i%S == 0)
       printf("(");
     else 
       printf(" ");
-    if (values[i] == 0xfff)
+    if (values[i] == INT_MAX)
       printf("---");
     else
       printf("%3i",values[i]);
@@ -93,6 +93,7 @@ void testIt(const std::vector<T> &h_values)
   // ------------------------------------------------------------------
 #if 1
   {
+#if 0
     key_t *dbg;
     cudaMallocManaged((void**)&dbg,1024*sizeof(key_t));
     
@@ -134,14 +135,14 @@ void testIt(const std::vector<T> &h_values)
     std::cout << "4:0: " << std::endl;
     print(dbg,1024,8); std::cout << "\n\n";
 
-
+#endif
 
     CUBIT_CUDA_CALL(Memcpy(d_bitonic,d_values,h_values.size()*sizeof(T),cudaMemcpyDefault));
-    cubit::sort(d_bitonic,h_values.size(),dbg,-1,-1);
+    cubit::sort(d_bitonic,h_values.size(),(int*)0,-1,-1);
     
     
     CUBIT_CUDA_SYNC_CHECK();
-    print(d_bitonic,h_values.size(),1024);
+    // print(d_bitonic,h_values.size(),1024);
     checkBlocks(d_bitonic,h_values.size(),1024);
     // print(d_bitonic,h_values.size(),8);
     exit(0);
@@ -175,8 +176,8 @@ void testIt(const std::vector<T> &h_values)
 int main(int ac, char **av)
 {
   while (true) {
-    int N = 7654;
-    // int N = 50*1000000;//1+int(powf(2.f,24*sqrtf(drand48())));
+    // int N = 7654;
+    int N = 50*1000000;//1+int(powf(2.f,24*sqrtf(drand48())));
     std::vector<int> values(N);
     for (int i=0;i<N;i++) {
       values[i] = (random() % 1000);
