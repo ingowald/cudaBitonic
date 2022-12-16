@@ -21,6 +21,7 @@ endif()
 project(CUDABitonic VERSION 0.1.1 LANGUAGES C CXX CUDA)
 
 cmake_minimum_required(VERSION 3.16.2)
+set (CMAKE_CXX_STANDARD 14)
 
 # ==================================================================
 # configure build type
@@ -55,8 +56,14 @@ if (NOT CUBIT_IS_SUBPROJECT)
 endif()
 
 
-
-add_executable(test_int32 testing/test.cu)
 set(CUDA_ARCH_FLAGS "-gencode arch=compute_70,code=sm_70 -gencode arch=compute_80,code=sm_80 -gencode arch=compute_86,code=sm_86")
 set_source_files_properties(testing/test.cu PROPERTIES COMPILE_FLAGS ${CUDA_ARCH_FLAGS})
-
+foreach(KEY_T int32 uint32 float uint64 double)
+  add_executable(test_${KEY_T} testing/test.cu)
+  target_compile_definitions(test_${KEY_T} PUBLIC -DKEY_T=${KEY_T})
+  foreach(VALUE_T int32 uint32 float uint64 double)
+    add_executable(test_${KEY_T}_${VALUE_T} testing/test.cu)
+    target_compile_definitions(test_${KEY_T}_${VALUE_T} PUBLIC -DVALUE_T=${VALUE_T})
+    target_compile_definitions(test_${KEY_T}_${VALUE_T} PUBLIC -DKEY_T=${KEY_T})
+  endforeach()
+endforeach()

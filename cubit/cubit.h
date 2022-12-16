@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include <cuda_runtime.h>
 #include "../cubit/common.h"
-#include <cub/cub.cuh>
+#include <cuda_runtime.h>
 
 namespace cubit {
 
@@ -30,7 +29,15 @@ namespace cubit {
   inline __device__ T max_value();
 
   template<>
-  inline __device__ int max_value() { return INT_MAX; };
+  inline __device__ uint32_t max_value() { return UINT_MAX; };
+  template<>
+  inline __device__ int32_t max_value() { return INT_MAX; };
+  template<>
+  inline __device__ uint64_t max_value() { return ULONG_MAX; };
+  template<>
+  inline __device__ float max_value() { return INFINITY; };
+  template<>
+  inline __device__ double max_value() { return INFINITY; };
   
   template<typename key_t>
   inline static __device__ void putInOrder(key_t *const __restrict__ keys,
@@ -60,25 +67,6 @@ namespace cubit {
       keys[a] = key_b;
       keys[b] = key_a;
     }
-  }
-
-  template<typename key_t>
-  inline static __device__ void sort(key_t *const __restrict__ keys,
-                                     uint32_t a,
-                                     uint32_t b)
-  {
-    key_t key_a = keys[a];
-    key_t key_b = keys[b];
-#if 0
-    keys[a] = (key_a<key_b)?key_a:key_b;
-    keys[b] = (key_a<key_b)?key_b:key_a;
-#else
-    if (a > b) printf("invalid ab\n");
-    if (key_b < key_a) {
-      keys[a] = key_b;
-      keys[b] = key_a;
-    }
-#endif
   }
 
   template<typename key_t>
@@ -115,7 +103,6 @@ namespace cubit {
   {
     key_t key_a = keys[a];
     key_t key_b = keys[b];
-    // if (a > b) printf("invalid ab\n");
     if (key_b < key_a) {
       keys[a] = key_b;
       keys[b] = key_a;
@@ -130,7 +117,6 @@ namespace cubit {
   {
     key_t key_a = keys[a];
     key_t key_b = keys[b];
-    // if (a > b) printf("invalid ab\n");
     if (key_b < key_a) {
       keys[a] = key_b;
       keys[b] = key_a;
@@ -1242,96 +1228,6 @@ namespace cubit {
       gmem_sort(keys,vals,l,r);
     }
   }
-  
-
-
-//   template<typename key_t, bool reverse>
-//   __global__ void d_bitonic(key_t *const __restrict__ keys, uint32_t N, int logSegLen)
-//   {
-//     const uint32_t tid = threadIdx.x + blockIdx.x*blockDim.x;
-//     if (tid >= N) return;
-//     if (reverse) {
-//       const uint32_t seg  = tid >> logSegLen;
-      
-//       const uint32_t segBegin = (seg << (logSegLen+1));
-//       const uint32_t segLen   = 1<<logSegLen;
-    
-//       const uint32_t lane = cub::BFE(tid,0,logSegLen);
-    
-//       const uint32_t l = segBegin + lane;
-//       const uint32_t r = (segBegin + (2*segLen-1) - lane);
-//       putInOrder(keys,N,l,r);
-//     } else {
-//       const uint32_t lane = cub::BFE(tid,0,logSegLen);
-//       const uint32_t seg  = tid >> logSegLen;
-      
-//       const uint32_t segBegin = (seg << (logSegLen+1));
-//       const uint32_t segLen   = 1<<logSegLen;
-    
-//       const uint32_t l = segBegin + lane;
-//       const uint32_t r = (l+segLen);
-//       putInOrder(keys,N,l,r);
-//     }
-//   }
-
-
-//   template<typename key_t, bool first_reverse>
-//   __global__ void d_bitonic_block(key_t *const __restrict__ _keys, uint32_t N, uint32_t logSegLen)
-//   {
-//     if (N <= blockIdx.x*(2*cubit::block_size)) return;
-//     N -= blockIdx.x*(2*cubit::block_size);
-
-//     uint32_t segLen = 1<<logSegLen;
-//     __shared__ key_t l_keys[2*cubit::block_size];
-//     if (threadIdx.x < N)
-//       l_keys[threadIdx.x] = _keys[blockIdx.x*(2*cubit::block_size)+threadIdx.x];
-//     if (threadIdx.x+cubit::block_size < N)
-//       l_keys[threadIdx.x+cubit::block_size] =
-//         _keys[blockIdx.x*(2*cubit::block_size)+(threadIdx.x+cubit::block_size)];
-//     __syncthreads();
-//     key_t *const __restrict__ keys = l_keys;
-//     uint32_t seg  = threadIdx.x >> logSegLen;
-      
-//     uint32_t segBegin = (seg << (logSegLen+1));
-//     uint32_t segBeginHalf = seg << logSegLen;
-//     // uint32_t segLen   = 1<<logSegLen;
-    
-//     // uint32_t lane = threadIdx.x & (segLen-1);
-//     const uint32_t lane = cub::BFE(threadIdx.x,0,logSegLen);
-    
-//     // uint32_t l = segBegin + lane;
-//     uint32_t l = segBeginHalf+segBeginHalf+lane;
-//     uint32_t r
-//       = first_reverse
-//       ? (segBegin + (2*segLen-1) - lane)
-//       : (l+segLen);
-    
-//     putInOrder(keys,N,l,r);
-
-// #pragma unroll(5)
-//     while (logSegLen > 0) {
-//       if (logSegLen >= 5) __syncthreads();
-      
-//       --logSegLen;
-//       uint32_t seg  = threadIdx.x >> logSegLen;
-      
-//       uint32_t segBegin = (seg << (logSegLen+1));
-//       uint32_t segLen   = 1<<logSegLen;
-//       uint32_t lane = threadIdx.x & (segLen-1);
-      
-//       uint32_t l = segBegin + lane;
-//       uint32_t r = (l+segLen);
-      
-//       putInOrder(keys,N,l,r);
-//     }
-//     __syncthreads();
-//     if (threadIdx.x < N)
-//       _keys[blockIdx.x*(2*cubit::block_size)+threadIdx.x]
-//         = l_keys[threadIdx.x];
-//     if (threadIdx.x+cubit::block_size < N)
-//       _keys[blockIdx.x*(2*cubit::block_size)+(threadIdx.x+cubit::block_size)]
-//         = l_keys[threadIdx.x+cubit::block_size];
-//   }
   
   template<typename key_t>
   inline void sort(key_t *const __restrict__ d_values,
