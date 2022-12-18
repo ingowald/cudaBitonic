@@ -18,6 +18,7 @@
 #include <cub/cub.cuh>
 #include <vector>
 #include <random>
+#include <algorithm>
 #include <typeinfo>
 
 using namespace cubit::common;
@@ -28,6 +29,15 @@ inline bool sorted(const std::vector<T> &values)
   for (size_t i=1;i<values.size();i++)
     if (values[i] < values[i-1]) return false;
   return true;
+}
+
+template<typename T>
+inline bool asExpected(const std::vector<T> &ours_sorted,
+                       const std::vector<T> &input_unsorted)
+{
+  std::vector<T> reference_sorted = input_unsorted;
+  std::sort(reference_sorted.begin(),reference_sorted.end());
+  return reference_sorted == ours_sorted;
 }
 
 template<typename T>
@@ -91,7 +101,7 @@ void test_keys(const std::vector<T> &h_values)
   std::vector<T> h_results(h_values.size());
   CUBIT_CUDA_CALL(Memcpy(h_results.data(),d_cub_radix_out,h_values.size()*sizeof(T),cudaMemcpyDefault));
   // CUBIT_CUDA_CALL(Memcpy(h_results.data(),d_bitonic,h_values.size()*sizeof(T),cudaMemcpyDefault));
-  if (!sorted(h_results)) {
+  if (!sorted(h_results) || !asExpected(h_results,h_values)) {
     std::cout << CUBIT_TERMINAL_RED << "*** TEST FAILED ***" << CUBIT_TERMINAL_DEFAULT << std::endl;
     throw std::runtime_error("not sorted...");
   } else
@@ -183,10 +193,13 @@ void test_pairs(const std::vector<KeyT> &h_keys,
   
   CUBIT_CUDA_SYNC_CHECK();
 
-  std::vector<KeyT> h_results(h_values.size());
+  std::vector<KeyT> h_results(h_keys.size());
   CUBIT_CUDA_CALL(Memcpy(h_results.data(),keys_bitonic,h_keys.size()*sizeof(KeyT),cudaMemcpyDefault));
-  if (!sorted(h_results))
+  if (!sorted(h_results) || !asExpected(h_results,h_keys)) {
+    std::cout << CUBIT_TERMINAL_RED << "*** TEST FAILED ***" << CUBIT_TERMINAL_DEFAULT << std::endl;
     throw std::runtime_error("not sorted...");
+  } else
+    std::cout << CUBIT_TERMINAL_GREEN << "... ok." << CUBIT_TERMINAL_DEFAULT << std::endl;
   
   std::cout << "time(s) : cub radix = " << prettyDouble(t_cub_radix)
             << " vs bitonic " << prettyDouble(t_bitonic)
@@ -268,7 +281,7 @@ int main(int ac, char **av)
   std::mt19937 gen(rd());
   Random<float> sizeRandom(gen);
   for (int rep=0;rep<1000;rep++) {
-    int N = int(powf(2.f,24*sqrtf(sizeRandom())));
+    int N = int(powf(2.f,28*sqrtf(sizeRandom())));
 #ifdef VALUE_T
     std::cout << CUBIT_TERMINAL_BLUE
               << "testing sorting on " << prettyNumber(N)

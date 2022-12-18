@@ -56,8 +56,9 @@ if (NOT CUBIT_IS_SUBPROJECT)
 endif()
 
 
-set(CUDA_ARCH_FLAGS "-gencode arch=compute_70,code=sm_70 -gencode arch=compute_80,code=sm_80 -gencode arch=compute_86,code=sm_86")
-set_source_files_properties(testing/test.cu PROPERTIES COMPILE_FLAGS ${CUDA_ARCH_FLAGS})
+set(CUDA_ARCHITECTURES "70;75;80;86")
+#set(CUDA_ARCH_FLAGS "-gencode arch=compute_70,code=sm_70 -gencode arch=compute_80,code=sm_80 -gencode arch=compute_86,code=sm_86")
+#set_source_files_properties(testing/test.cu PROPERTIES COMPILE_FLAGS ${CUDA_ARCH_FLAGS})
 foreach(KEY_T int32 uint32 float uint64 double)
   add_executable(test_${KEY_T} testing/test.cu)
   target_compile_definitions(test_${KEY_T} PUBLIC -DKEY_T=${KEY_T})
