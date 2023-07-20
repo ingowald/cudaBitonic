@@ -282,6 +282,8 @@ int main(int ac, char **av)
   Random<float> sizeRandom(gen);
   for (int rep=0;rep<1000;rep++) {
     int N = int(powf(2.f,28*sqrtf(sizeRandom())));
+    if (ac > 1)
+      N = std::stoi(av[1]);
 #ifdef VALUE_T
     std::cout << CUBIT_TERMINAL_BLUE
               << "testing sorting on " << prettyNumber(N)
