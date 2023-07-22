@@ -153,36 +153,13 @@ namespace cubit {
     using std::abs;
 #endif
 
-    inline __both__ float rcp(float f)      { return 1.f/f; }
-    inline __both__ double rcp(double d)    { return 1./d; }
-  
-    inline __both__ int32_t divRoundUp(int32_t a, int32_t b) { return (a+b-1)/b; }
+    inline __both__ int32_t  divRoundUp(int32_t a, int32_t b) { return (a+b-1)/b; }
     inline __both__ uint32_t divRoundUp(uint32_t a, uint32_t b) { return (a+b-1)/b; }
-    inline __both__ int64_t divRoundUp(int64_t a, int64_t b) { return (a+b-1)/b; }
+    inline __both__ int64_t  divRoundUp(int64_t a, int64_t b) { return (a+b-1)/b; }
     inline __both__ uint64_t divRoundUp(uint64_t a, uint64_t b) { return (a+b-1)/b; }
   
     using ::sin; // this is the double version
     using ::cos; // this is the double version
-
-    /*! namespace that offers polymorphic overloads of functions like
-        sqrt, rsqrt, sin, cos, etc (that vary based on float vs
-        double), and that is NOT in a default namespace where ti
-        would/could clash with cuda or system-defines of the same name
-        - TODO: make sure that cos, sin, abs, etc are also properly
-        handled here. */
-    namespace polymorphic {
-#ifdef __CUDA_ARCH__
-      inline __both__ float sqrt(const float f)     { return ::sqrtf(f); }
-      inline __both__ double sqrt(const double d)   { return ::sqrt(d); }
-#else
-      inline __both__ float sqrt(const float f)     { return ::sqrtf(f); }
-      inline __both__ double sqrt(const double d)   { return ::sqrt(d); }
-#endif
-      
-      inline __both__ float rsqrt(const float f)    { return 1.f/cubit::common::polymorphic::sqrt(f); }
-      inline __both__ double rsqrt(const double d)  { return 1./cubit::common::polymorphic::sqrt(d); }
-    }
-    
 
 #ifdef __WIN32__
 #  define osp_snprintf sprintf_s
