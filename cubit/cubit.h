@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2022-2022 Ingo Wald                                            //
+// Copyright 2022-2023 Ingo Wald                                            //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -13,6 +13,29 @@
 // See the License for the specific language governing permissions and      //
 // limitations under the License.                                           //
 // ======================================================================== //
+
+/*! this file is from https://github.com/ingowald/cudaBitonic
+
+  It implements a bitonic sorter that, unlike most other sample codes
+  for this algorithm, can also do non-power of two sizes of data, as
+  well as both key and key-value sorts. it is templated over both key
+  and (where appropriate) value type, so should work for a wide range
+  of types; all it requires is that there's a operator< defined for
+  the key_t. 
+
+  Memory usage: Unlike most other sort algorithms bitonic sorting (and
+  this implementation thereof) operates exclusively by swapping
+  elements; consequently this memory requires exactly zero bytes of
+  additionsal "temporary" memory.
+
+  Note re performance: this implementation aims as effectively using
+  shared memory whereever it can; however; however, for large data
+  this algorithm will require a fair amount of meomry
+  bandwidth. Except it to be about roughly as fast as cub::Sort and
+  cub::SortPairs for small to modest-sized data sets (say, <=100k),
+  but for larger data sets you will see performance drop to about 5x
+  to 10x less than that of the cub radix sort variants
+*/
 
 #pragma once
 

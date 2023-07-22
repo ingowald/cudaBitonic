@@ -225,13 +225,14 @@ void test_pairs(const std::vector<KeyT> &h_keys,
             << std::endl;
 
   CUBIT_CUDA_CALL(Free(d_values));
+  CUBIT_CUDA_CALL(Free(d_keys));
+  CUBIT_CUDA_CALL(Free(keys_bitonic));
   CUBIT_CUDA_CALL(Free(values_bitonic));
+  CUBIT_CUDA_CALL(Free(keys_cub_radix_in));
+  CUBIT_CUDA_CALL(Free(keys_cub_radix_out));
   CUBIT_CUDA_CALL(Free(values_cub_radix_in));
   CUBIT_CUDA_CALL(Free(values_cub_radix_out));
   CUBIT_CUDA_CALL(Free(d_cub_radix_tmp));
-  CUBIT_CUDA_CALL(Free(keys_bitonic));
-  CUBIT_CUDA_CALL(Free(keys_cub_radix_in));
-  CUBIT_CUDA_CALL(Free(keys_cub_radix_out));
 }
 
 
