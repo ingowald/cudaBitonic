@@ -41,6 +41,15 @@ inline bool asExpected(const std::vector<T> &ours_sorted,
 }
 
 template<typename T>
+inline bool allValuesAccountedFor(std::vector<T> vals0,
+                                  std::vector<T> vals1)
+{
+  std::sort(vals0.begin(),vals0.end());
+  std::sort(vals1.begin(),vals1.end());
+  return vals0 == vals1;
+}
+
+template<typename T>
 void test_keys(const std::vector<T> &h_values)
 {
   // upload test data to the device
@@ -131,11 +140,11 @@ void test_pairs(const std::vector<KeyT> &h_keys,
   CUBIT_CUDA_CALL(Memcpy(d_keys,h_keys.data(),h_keys.size()*sizeof(KeyT),cudaMemcpyDefault));
   
   KeyT *keys_bitonic = 0;
-  ValueT *vals_bitonic = 0;
+  ValueT *values_bitonic = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&keys_bitonic,h_keys.size()*sizeof(KeyT)));
   if (!keys_bitonic) throw std::runtime_error("could not malloc...");
-  CUBIT_CUDA_CALL(Malloc((void**)&vals_bitonic,h_values.size()*sizeof(ValueT)));
-  if (!vals_bitonic) throw std::runtime_error("could not malloc...");
+  CUBIT_CUDA_CALL(Malloc((void**)&values_bitonic,h_values.size()*sizeof(ValueT)));
+  if (!values_bitonic) throw std::runtime_error("could not malloc...");
 
   // ------------------------------------------------------------------
   // CUB ***INIT***
@@ -147,18 +156,18 @@ void test_pairs(const std::vector<KeyT> &h_keys,
   CUBIT_CUDA_CALL(Malloc((void**)&keys_cub_radix_out,h_keys.size()*sizeof(KeyT)));
   if (!keys_cub_radix_out) throw std::runtime_error("could not malloc...");
 
-  ValueT *vals_cub_radix_in = 0;
-  CUBIT_CUDA_CALL(Malloc((void**)&vals_cub_radix_in,h_values.size()*sizeof(ValueT)));
-  if (!vals_cub_radix_in) throw std::runtime_error("could not malloc...");
-  ValueT *vals_cub_radix_out = 0;
-  CUBIT_CUDA_CALL(Malloc((void**)&vals_cub_radix_out,h_values.size()*sizeof(ValueT)));
-  if (!vals_cub_radix_out) throw std::runtime_error("could not malloc...");
+  ValueT *values_cub_radix_in = 0;
+  CUBIT_CUDA_CALL(Malloc((void**)&values_cub_radix_in,h_values.size()*sizeof(ValueT)));
+  if (!values_cub_radix_in) throw std::runtime_error("could not malloc...");
+  ValueT *values_cub_radix_out = 0;
+  CUBIT_CUDA_CALL(Malloc((void**)&values_cub_radix_out,h_values.size()*sizeof(ValueT)));
+  if (!values_cub_radix_out) throw std::runtime_error("could not malloc...");
 
   void *d_cub_radix_tmp = 0;
   size_t  cub_radix_tmp_size = 0;
   cub::DeviceRadixSort::SortPairs(d_cub_radix_tmp,cub_radix_tmp_size,
                                   keys_cub_radix_in,keys_cub_radix_out,
-                                  vals_cub_radix_in,vals_cub_radix_out,
+                                  values_cub_radix_in,values_cub_radix_out,
                                   h_values.size());
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_tmp,cub_radix_tmp_size));
   if (!d_cub_radix_tmp) throw std::runtime_error("could not malloc...");
@@ -170,10 +179,10 @@ void test_pairs(const std::vector<KeyT> &h_keys,
   double t0_cub_radix = getCurrentTime();
   for (int i=0;i<nRepeats;i++) {
     CUBIT_CUDA_CALL(Memcpy(keys_cub_radix_in,d_keys,h_keys.size()*sizeof(KeyT),cudaMemcpyDefault));
-    CUBIT_CUDA_CALL(Memcpy(vals_cub_radix_in,d_values,h_values.size()*sizeof(ValueT),cudaMemcpyDefault));
+    CUBIT_CUDA_CALL(Memcpy(values_cub_radix_in,d_values,h_values.size()*sizeof(ValueT),cudaMemcpyDefault));
     cub::DeviceRadixSort::SortPairs(d_cub_radix_tmp,cub_radix_tmp_size,
                                     keys_cub_radix_in,keys_cub_radix_out,
-                                    vals_cub_radix_in,vals_cub_radix_out,
+                                    values_cub_radix_in,values_cub_radix_out,
                                     h_values.size());
   }
   CUBIT_CUDA_SYNC_CHECK();
@@ -185,20 +194,29 @@ void test_pairs(const std::vector<KeyT> &h_keys,
   double t0_bitonic = getCurrentTime();
   for (int i=0;i<nRepeats;i++) {
     CUBIT_CUDA_CALL(Memcpy(keys_bitonic,d_keys,h_keys.size()*sizeof(KeyT),cudaMemcpyDefault));
-    CUBIT_CUDA_CALL(Memcpy(vals_bitonic,d_values,h_values.size()*sizeof(ValueT),cudaMemcpyDefault));
-    cubit::sort(keys_bitonic,vals_bitonic,h_values.size());
+    CUBIT_CUDA_CALL(Memcpy(values_bitonic,d_values,h_values.size()*sizeof(ValueT),cudaMemcpyDefault));
+    cubit::sort(keys_bitonic,values_bitonic,h_values.size());
   }
   CUBIT_CUDA_SYNC_CHECK();
   double t_bitonic = (getCurrentTime() - t0_bitonic)/nRepeats;
   
   CUBIT_CUDA_SYNC_CHECK();
 
-  std::vector<KeyT> h_results(h_keys.size());
-  CUBIT_CUDA_CALL(Memcpy(h_results.data(),keys_bitonic,h_keys.size()*sizeof(KeyT),cudaMemcpyDefault));
-  if (!sorted(h_results) || !asExpected(h_results,h_keys)) {
-    std::cout << CUBIT_TERMINAL_RED << "*** TEST FAILED ***" << CUBIT_TERMINAL_DEFAULT << std::endl;
-    throw std::runtime_error("not sorted...");
-  } else
+  std::vector<KeyT> h_result_keys(h_keys.size());
+  CUBIT_CUDA_CALL(Memcpy(h_result_keys.data(),keys_bitonic,
+                         h_keys.size()*sizeof(KeyT),cudaMemcpyDefault));
+  std::vector<ValueT> h_result_values(h_values.size());
+  CUBIT_CUDA_CALL(Memcpy(h_result_values.data(),values_bitonic,
+                         h_values.size()*sizeof(ValueT),cudaMemcpyDefault));
+  if (!sorted(h_result_keys) ||
+      !asExpected(h_result_keys,h_keys) ||
+      !allValuesAccountedFor(h_result_values,h_values))
+    {
+      std::cout << CUBIT_TERMINAL_RED << "*** TEST FAILED ***" << CUBIT_TERMINAL_DEFAULT
+                << std::endl;
+      throw std::runtime_error("not sorted...");
+    }
+  else
     std::cout << CUBIT_TERMINAL_GREEN << "... ok." << CUBIT_TERMINAL_DEFAULT << std::endl;
   
   std::cout << "time(s) : cub radix = " << prettyDouble(t_cub_radix)
@@ -207,9 +225,9 @@ void test_pairs(const std::vector<KeyT> &h_keys,
             << std::endl;
 
   CUBIT_CUDA_CALL(Free(d_values));
-  CUBIT_CUDA_CALL(Free(vals_bitonic));
-  CUBIT_CUDA_CALL(Free(vals_cub_radix_in));
-  CUBIT_CUDA_CALL(Free(vals_cub_radix_out));
+  CUBIT_CUDA_CALL(Free(values_bitonic));
+  CUBIT_CUDA_CALL(Free(values_cub_radix_in));
+  CUBIT_CUDA_CALL(Free(values_cub_radix_out));
   CUBIT_CUDA_CALL(Free(d_cub_radix_tmp));
   CUBIT_CUDA_CALL(Free(keys_bitonic));
   CUBIT_CUDA_CALL(Free(keys_cub_radix_in));

@@ -23,6 +23,8 @@ namespace cubit {
 
   enum { block_size = 1024 };
 
+  /*! helper function to compute block count for given number of
+      thread and block size; by dividing and rounding up */
   inline int divRoundUp(int a, int b) { return (a+b-1)/b; }
 
   template<typename T>
