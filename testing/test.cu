@@ -55,7 +55,7 @@ void test_keys(const std::vector<T> &h_values)
   // upload test data to the device
   T *d_values = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&d_values,h_values.size()*sizeof(T)));
-  if (!d_values) throw std::runtime_error("could not malloc...");
+  if (!d_values) throw std::runtime_error("could not malloc (1)...");
   CUBIT_CUDA_CALL(Memcpy(d_values,h_values.data(),h_values.size()*sizeof(T),cudaMemcpyDefault));
   
   // create a copy of the uploaded data, so we can keep re-sorting the
@@ -68,16 +68,16 @@ void test_keys(const std::vector<T> &h_values)
   // ------------------------------------------------------------------
   T *d_cub_radix_in = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_in,h_values.size()*sizeof(T)));
-  if (!d_cub_radix_in) throw std::runtime_error("could not malloc...");
+  if (!d_cub_radix_in) throw std::runtime_error("could not malloc (2)...");
   T *d_cub_radix_out = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_out,h_values.size()*sizeof(T)));
-  if (!d_cub_radix_out) throw std::runtime_error("could not malloc...");
+  if (!d_cub_radix_out) throw std::runtime_error("could not malloc (3)...");
   void *d_cub_radix_tmp = 0;
   size_t  cub_radix_tmp_size = 0;
   cub::DeviceRadixSort::SortKeys(d_cub_radix_tmp,cub_radix_tmp_size,
                                  d_cub_radix_in,d_cub_radix_out,h_values.size());
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_tmp,cub_radix_tmp_size));
-  if (!d_cub_radix_tmp) throw std::runtime_error("could not malloc...");
+  if (!d_cub_radix_tmp) throw std::runtime_error("could not malloc (4)...");
   int nRepeats = 10;
   
   // ------------------------------------------------------------------
@@ -132,36 +132,36 @@ void test_pairs(const std::vector<KeyT> &h_keys,
   KeyT *d_keys = 0;
   ValueT *d_values = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&d_values,h_values.size()*sizeof(ValueT)));
-  if (!d_values) throw std::runtime_error("could not malloc...");
+  if (!d_values) throw std::runtime_error("could not malloc (5)...");
   CUBIT_CUDA_CALL(Memcpy(d_values,h_values.data(),h_values.size()*sizeof(ValueT),cudaMemcpyDefault));
 
   CUBIT_CUDA_CALL(Malloc((void**)&d_keys,h_keys.size()*sizeof(KeyT)));
-  if (!d_keys) throw std::runtime_error("could not malloc...");
+  if (!d_keys) throw std::runtime_error("could not malloc (6)...");
   CUBIT_CUDA_CALL(Memcpy(d_keys,h_keys.data(),h_keys.size()*sizeof(KeyT),cudaMemcpyDefault));
   
   KeyT *keys_bitonic = 0;
   ValueT *values_bitonic = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&keys_bitonic,h_keys.size()*sizeof(KeyT)));
-  if (!keys_bitonic) throw std::runtime_error("could not malloc...");
+  if (!keys_bitonic) throw std::runtime_error("could not malloc (7)...");
   CUBIT_CUDA_CALL(Malloc((void**)&values_bitonic,h_values.size()*sizeof(ValueT)));
-  if (!values_bitonic) throw std::runtime_error("could not malloc...");
+  if (!values_bitonic) throw std::runtime_error("could not malloc (8)...");
 
   // ------------------------------------------------------------------
   // CUB ***INIT***
   // ------------------------------------------------------------------
   KeyT *keys_cub_radix_in = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&keys_cub_radix_in,h_keys.size()*sizeof(KeyT)));
-  if (!keys_cub_radix_in) throw std::runtime_error("could not malloc...");
+  if (!keys_cub_radix_in) throw std::runtime_error("could not malloc (9)...");
   KeyT *keys_cub_radix_out = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&keys_cub_radix_out,h_keys.size()*sizeof(KeyT)));
-  if (!keys_cub_radix_out) throw std::runtime_error("could not malloc...");
+  if (!keys_cub_radix_out) throw std::runtime_error("could not malloc (10)...");
 
   ValueT *values_cub_radix_in = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&values_cub_radix_in,h_values.size()*sizeof(ValueT)));
-  if (!values_cub_radix_in) throw std::runtime_error("could not malloc...");
+  if (!values_cub_radix_in) throw std::runtime_error("could not malloc (11)...");
   ValueT *values_cub_radix_out = 0;
   CUBIT_CUDA_CALL(Malloc((void**)&values_cub_radix_out,h_values.size()*sizeof(ValueT)));
-  if (!values_cub_radix_out) throw std::runtime_error("could not malloc...");
+  if (!values_cub_radix_out) throw std::runtime_error("could not malloc (12)...");
 
   void *d_cub_radix_tmp = 0;
   size_t  cub_radix_tmp_size = 0;
@@ -170,7 +170,7 @@ void test_pairs(const std::vector<KeyT> &h_keys,
                                   values_cub_radix_in,values_cub_radix_out,
                                   h_values.size());
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_tmp,cub_radix_tmp_size));
-  if (!d_cub_radix_tmp) throw std::runtime_error("could not malloc...");
+  if (cub_radix_tmp_size && !d_cub_radix_tmp) throw std::runtime_error("could not malloc (13)...");
   int nRepeats = 100;
   
   // ------------------------------------------------------------------
