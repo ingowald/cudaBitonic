@@ -56,7 +56,8 @@ namespace cubit {
     key_t key_a = keys[a];
     key_t key_b = keys[b];
     const bool keepAsIs
-      = valid[a] && (!valid[b] || (key_a < key_b));
+      = valid[a] & (!valid[b] | (key_a < key_b));
+      // = valid[a] && (!valid[b] || (key_a < key_b));
     keys[a] = (keepAsIs)?key_a:key_b;
     keys[b] = (keepAsIs)?key_b:key_a;
   }
@@ -73,7 +74,8 @@ namespace cubit {
     val_t val_a = vals[a];
     val_t val_b = vals[b];
     const bool keepAsIs
-      = valid[a] && (!valid[b] || (key_a < key_b));
+      = valid[a] & (!valid[b] | (key_a < key_b));
+      // = valid[a] && (!valid[b] || (key_a < key_b));
     keys[a] = (keepAsIs)?key_a:key_b;
     keys[b] = (keepAsIs)?key_b:key_a;
     vals[a] = (keepAsIs)?val_a:val_b;

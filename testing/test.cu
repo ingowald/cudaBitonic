@@ -116,8 +116,8 @@ void test_keys(const std::vector<T> &h_values)
   } else
     std::cout << CUBIT_TERMINAL_GREEN << "... ok." << CUBIT_TERMINAL_DEFAULT << std::endl;
 
-  std::cout << "time(s) : cub radix = " << prettyDouble(t_cub_radix)
-            << " vs bitonic " << prettyDouble(t_bitonic)
+  std::cout << "time(s) : cub radix = " << prettyDouble(t_cub_radix) << "s"
+            << " vs bitonic " << prettyDouble(t_bitonic) << "s"
             << " (that's " << (t_bitonic/t_cub_radix) << "x faster than us)"
             << std::endl;
 
