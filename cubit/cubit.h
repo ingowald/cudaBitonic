@@ -1270,15 +1270,15 @@ namespace cubit {
     // first - sort all blocks of 2x1024 using per-block sort
     // ==================================================================
     int nb = divRoundUp((int)numValues,numValuesPerBlock);
-    block_sort_up<<<nb,bs,0,stream>>>(d_keys,d_values,numValues);
+    block_sort_up<<<nb,bs,0,stream>>>(d_keys,d_values, (uint32_t)numValues);
 
     int _nb = divRoundUp(int(numValues),1024);
     for (int upLen=numValuesPerBlock;upLen<numValues;upLen+=upLen) {
-      big_up<<<_nb,bs,0,stream>>>(d_keys,d_values,numValues,upLen);
+      big_up<<<_nb,bs,0,stream>>>(d_keys,d_values,(uint32_t)numValues,upLen);
       for (int downLen=upLen/2;downLen>1024;downLen/=2) {
-        big_down<<<_nb,bs,0,stream>>>(d_keys,d_values,numValues,downLen);
+        big_down<<<_nb,bs,0,stream>>>(d_keys,d_values, (uint32_t)numValues,downLen);
       }
-      block_sort_down<<<nb,bs,0,stream>>>(d_keys,d_values,numValues);
+      block_sort_down<<<nb,bs,0,stream>>>(d_keys,d_values, (uint32_t)numValues);
     }
   }
 }
