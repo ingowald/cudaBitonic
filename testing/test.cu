@@ -75,7 +75,8 @@ void test_keys(const std::vector<T> &h_values)
   void *d_cub_radix_tmp = 0;
   size_t  cub_radix_tmp_size = 0;
   cub::DeviceRadixSort::SortKeys(d_cub_radix_tmp,cub_radix_tmp_size,
-                                 d_cub_radix_in,d_cub_radix_out,h_values.size());
+                                 d_cub_radix_in,d_cub_radix_out,
+                                 (int)h_values.size());
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_tmp,cub_radix_tmp_size));
   if (!d_cub_radix_tmp) throw std::runtime_error("could not malloc (4)...");
   int nRepeats = 10;
@@ -87,7 +88,8 @@ void test_keys(const std::vector<T> &h_values)
   for (int i=0;i<nRepeats;i++) {
     CUBIT_CUDA_CALL(Memcpy(d_cub_radix_in,d_values,h_values.size()*sizeof(T),cudaMemcpyDefault));
     cub::DeviceRadixSort::SortKeys(d_cub_radix_tmp,cub_radix_tmp_size,
-                                   d_cub_radix_in,d_cub_radix_out,h_values.size());
+                                   d_cub_radix_in,d_cub_radix_out,
+                                   (int)h_values.size());
   }
   CUBIT_CUDA_SYNC_CHECK();
   double t_cub_radix = (getCurrentTime() - t0_cub_radix)/nRepeats;
@@ -168,7 +170,7 @@ void test_pairs(const std::vector<KeyT> &h_keys,
   cub::DeviceRadixSort::SortPairs(d_cub_radix_tmp,cub_radix_tmp_size,
                                   keys_cub_radix_in,keys_cub_radix_out,
                                   values_cub_radix_in,values_cub_radix_out,
-                                  h_values.size());
+                                  (int)h_values.size());
   CUBIT_CUDA_CALL(Malloc((void**)&d_cub_radix_tmp,cub_radix_tmp_size));
   if (cub_radix_tmp_size && !d_cub_radix_tmp) throw std::runtime_error("could not malloc (13)...");
   int nRepeats = 100;
