@@ -185,7 +185,7 @@ void test_pairs(const std::vector<KeyT> &h_keys,
     cub::DeviceRadixSort::SortPairs(d_cub_radix_tmp,cub_radix_tmp_size,
                                     keys_cub_radix_in,keys_cub_radix_out,
                                     values_cub_radix_in,values_cub_radix_out,
-                                    h_values.size());
+                                    (int)h_values.size());
   }
   CUBIT_CUDA_SYNC_CHECK();
   double t_cub_radix = (getCurrentTime() - t0_cub_radix)/nRepeats;
